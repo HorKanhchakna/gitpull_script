@@ -1,15 +1,30 @@
 #!/bin/bash
 
-if [ -z "$1" ]; then
-  echo "Usage: githubpull [https://github.com/USERNAME]"
-  exit 1
+# Check if argument is given
+if [ $# -ne 1 ]; then
+    echo "Usage: githubpull [URL-TO-GITHUB-PROFILE]"
+    exit 1
 fi
 
-username=$(echo "$1" | awk -F'/' '{print $NF}')
+# Extract the GitHub username from the URL
+url=$1
+username=$(echo $url | awk -F '/' '{print $NF}')
 
-curl -s "https://api.github.com/users/$username/repos" | \
-  grep '"name":' | \
-  cut -d '"' -f 4 > "${username}.txt"
+# If username is empty, show error
+if [ -z "$username" ]; then
+    echo "Invalid GitHub profile URL."
+    exit 1
+fi
 
+# Use GitHub API to get list of repos (public)
+# Curl gets JSON, jq extracts repo names
+repos=$(curl -s "https://api.github.com/users/$username/repos?per_page=100" | jq -r '.[].name')
+
+if [ -z "$repos" ]; then
+    echo "No repositories found or invalid username."
+    exit 1
+fi
+
+# Save to file named username.txt
+echo "$repos" > "${username}.txt"
 echo "Saved repositories to ${username}.txt"
-
