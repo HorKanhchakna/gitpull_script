@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+  echo "Usage: githubpull [https://github.com/USERNAME]"
+  exit 1
+fi
+
+username=$(echo "$1" | awk -F'/' '{print $NF}')
+
+curl -s "https://api.github.com/users/$username/repos" | \
+  grep '"name":' | \
+  cut -d '"' -f 4 > "${username}.txt"
+
+echo "Saved repositories to ${username}.txt"
+
